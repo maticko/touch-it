@@ -12,8 +12,8 @@ app.get('/api/job/:nfc_id', function(req,res,next){
 	// get jobTitle From local DB!
 	console.log(req.params.nfc_id);
 	res.send({
-		'jobTitle': 'test-job-title',
-		'foo' : 'bar'
+		'title': 'test-job-title',
+		'job_id' : 1337
 	});
 });
 
@@ -24,7 +24,6 @@ app.post('/api/apply/:nfc_id', function(req, res, next){
 		success: true
 	});
 });
-
 
 var server = app.listen(8080, function(){
   var host = server.address().address;
