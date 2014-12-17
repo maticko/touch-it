@@ -9,7 +9,9 @@ $(document).ready(function() {
         job_link: "job link 2"
     }];
 
-    var tablecontents = "<table>";
+    var tablecontents = "<table class='table table-header'>";
+    tablecontents += "<thead><tr><th>Chip identity</th><th>Connected job link</th><th>Manage</th></tr></thead>";
+    tablecontents += "<tbody>";
     for (var i = 0; i < nfc_data.length; i++) {
         var item = nfc_data[i];
         tablecontents += "<tr>";
@@ -18,7 +20,7 @@ $(document).ready(function() {
         tablecontents += "<td><input type=button data-nfcid='" + item.nfc_id + "' data-request='modify' value='Modify'></td>";
         tablecontents += "</tr>";
     }
-    tablecontents += "</table>";
+    tablecontents += "</tbody></table>";
     document.getElementById("tablespace").innerHTML = tablecontents;
 
     $('input[type=button]').on('click', function(e) {
