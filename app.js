@@ -1,11 +1,30 @@
 var express = require('express');
 
 var app = express();
-app.use(express.static(__dirname));
+
+app.use('/src', express.static(__dirname + '/src'));
 
 app.get('/', function(req, res){
-	res.sendfile('./src/index.html');
+	res.sendFile(__dirname + '/src/index.html');
 });
+
+app.get('/api/job/:nfc_id', function(req,res,next){
+	// get jobTitle From local DB!
+	console.log(req.params.nfc_id);
+	res.send({
+		'jobTitle': 'test-job-title',
+		'foo' : 'bar'
+	});
+});
+
+app.post('/api/apply/:nfc_id', function(req, res, next){
+	// do the magic with waggle then!
+	console.log(req.params.nfc_id);
+	res.send({
+		success: true
+	});
+});
+
 
 var server = app.listen(8080, function(){
   var host = server.address().address;
