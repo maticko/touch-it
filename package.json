@@ -1,0 +1,16 @@
+{
+  "name": "OneTouchApply",
+  "version": "0.0.1",
+  "description": "New Findly one touch apply",
+  "main": "app.js",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/maticko/touch-it.git"
+  },
+  "dependencies": {
+    "express": "^4.10.6"
+  },
+  "devDependencies": {
+    "gulp": "^3.8.10"
+  }
+}
