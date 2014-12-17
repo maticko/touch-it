@@ -21,7 +21,7 @@ $(document).ready(function() {
     tablecontents += "</table>";
     document.getElementById("tablespace").innerHTML = tablecontents;
 
-    $('input[type=button').on('click', function(e) {
+    $('input[type=button]').on('click', function(e) {
         var input = $(e.target);
         var chipId = input.attr('data-nfcid');
         console.log(chipId);
