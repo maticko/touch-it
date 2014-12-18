@@ -77,28 +77,32 @@ Datastore(function(){
 		job_id = req.body.job_id,
 		job_title = req.body.job_title;
 
-		Connection.findOne({nfcId: nfc_id}, function(err, result){
-			if (err){
-				var newConnection = new Connection({nfcId: nfc_id, jobID: job_id, jobTitle: job_title});
-				newConnection.save(function(err,newconn){
-					if (err){
-						res.send({success: false});
-					} else {
-						res.send({success: true});
-					}
-				});
-			} else {
-				result.jobID = job_id;
-				result.jobTitle = job_title;
-				result.save(function(err,updatedConn){
-					if (err){
-						res.send({success: false});
-					} else {
-						res.send({success: true});
-					}
-				});
-			}
-		})
+		if(!job_id){
+			Connection.findOneAndRemove({nfcId:nfc_id});
+		} else {
+			Connection.findOne({nfcId: nfc_id}, function(err, result){
+				if (err || !result){
+					var newConnection = new Connection({nfcId: nfc_id, jobID: job_id, jobTitle: job_title});
+					newConnection.save(function(err,newconn){
+						if (err){
+							res.send({success: false});
+						} else {
+							res.send({success: true});
+						}
+					});
+				} else {
+					result.jobID = job_id;
+					result.jobTitle = job_title;
+					result.save(function(err,updatedConn){
+						if (err){
+							res.send({success: false});
+						} else {
+							res.send({success: true});
+						}
+					});
+				}
+			});
+		}
 	});
 
 	app.get('/api/job/list', function(req, res){
