@@ -27,9 +27,26 @@ app.get('/api/apply/:nfc_id', function(req,res,next){
 
 app.post('/api/apply/:nfc_id', function(req, res, next){
 	// do the magic with waggle then!
-	console.log(req.params.nfc_id);
-	res.send({
-		success: true
+	var email = req.body.profile_email;
+	var prof_id = req.body.profile_id;
+
+	// TODO: go to DB and get associated jobID;
+	var jobfolderID = "e5f01991-bfa0-4997-a115-8c4e1b1c8f1d";
+
+	var addToOrgUrl = 'http://waggle.zabdo.me/api/organizations/300/prospect';
+	var addToFolderUrl = "http://waggle.zabdo.me/api/organizations/300/profiles/byProfileId/"+prof_id;
+	var options = setOptions(addToOrgUrl, 'POST', {"personalDetail":{"email":email}}, true);
+	var folderIDbody = {"jobFolderIds":[jobfolderID]}
+	var opts2 = setOptions(addToFolderUrl, 'PUT', folderIDbody, true, 'application/findly.AddToJobFolderProfileCommand+json');
+
+	// Add prospect to org 
+	request(options, function(error, response, body){
+		// add prospect to jobfolder
+		request(opts2, function(err, rponse, body2){
+			res.send({
+				success: true
+			});
+		});
 	});
 });
 
