@@ -78,7 +78,9 @@ Datastore(function(){
 		job_title = req.body.job_title;
 
 		if(!job_id){
-			Connection.findOneAndRemove({nfcId:nfc_id});
+			Connection.findOneAndRemove({nfcId:nfc_id},function(err, result){
+				res.send({success:true});
+			});
 		} else {
 			Connection.findOne({nfcId: nfc_id}, function(err, result){
 				if (err || !result){
