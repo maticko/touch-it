@@ -36,7 +36,7 @@ body {
 .table{
     width: 80%;
     border-collapse: collapse;
-    table-layout:fixed;
+    /*table-layout:fixed;*/
     margin-left: auto;
     margin-right: auto;
 }
@@ -46,6 +46,7 @@ body {
     background-color:#fff;
     padding: 8px;
     break-word: word-wrap; 
+    overflow: hidden;
 }
 .table>tbody>tr:nth-child(odd)>td{
     background-color:#f7f7f7;
@@ -64,7 +65,11 @@ body {
     height: 34px;
     padding-left: 20px;
     padding-right: 20px;
-    margin-left: 20px;
+    margin: 0;
+}
+
+.bottomButton{
+    margin-top: 10px;
 }
 
 input[type=text]{
@@ -85,7 +90,7 @@ select{
     border-width: 1px;
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     font-size: 14px;
-    width: 80%;
+    width: 100%;
 }
 select>option{
     height: 34px;

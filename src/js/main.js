@@ -1,48 +1,94 @@
 $(document).ready(function() {
     var model = {};
-    model.nfcList = ["nfc_1", "nfc_2"];
+    model.nfcList = [];
     model.connectedJobs = {};
     model.companyJobs = {};
     $.get('/api/job/list', function(data) {
         model.companyJobs = data.queryResult;
-        createTable();
+        loadNFCList();
     });
+
+    function loadNFCList() {
+        $.get('/api/nfc/list', function(data) {
+            console.log(data);
+            model.nfcList = data;
+            createTable();
+        });
+    }
 
     function createTable() {
         var tablecontents = "<table class='table table-header'>";
-        tablecontents += "<thead><tr><th>Chip ID</th><th>Job to apply</th></tr></thead>";
+        tablecontents += "<thead><tr><th>NFC ID</th><th>Job to apply</th><th style='width: 50px'><th></tr></thead>";
         tablecontents += "<tbody>";
-        for (var i = 0; i < model.nfcList.length; i++) {
-            var nfc_id = model.nfcList[i];
-            tablecontents += "<tr>";
-            tablecontents += "<td>" + nfc_id + "</td>";
-            tablecontents += "<td id='joblink_" + nfc_id + "'>" + createSelect(nfc_id) + "</td>";
-            tablecontents += "</tr>";
-
-            $.ajax("/api/apply/" + nfc_id, {
-                nfcId: nfc_id,
-                success: function(data) {
-                    model.connectedJobs[this.nfcId] = data;
-                    var tdlink = $('#joblink_' + this.nfcId);
-                    var select = tdlink.children('select');
-                    //tdlink[0].innerHTML = data.title;
-                    select.val(data.id);
-                    select.on('change', selectChangeHandler);
-                }
-            });
-        }
         tablecontents += "</tbody></table>";
         document.getElementById("tablespace").innerHTML = tablecontents;
+        var addButton = $(document.createElement('input'));
+        addButton.attr('id', "addnfcbutton");
+        addButton.attr('type', 'button');
+        addButton.attr('value', "Add");
+        addButton.addClass('orangeButton bottomButton');
+        $('#bottomdiv').append(addButton);
+        addButton.click(function() {
+            var dBox = $('<div id="newnfcform" title="temp dialog"><form id="new_nfc_form><fieldset><label for="nfcid_input">NFC ID</label><input type="text" name="nfcid_input" id="nfcid_input" value="" class="text ui-widget-content ui-corner-all"></fieldset></form></div>');
+            dBox.dialog({
+                "title": "New NFC ID",
+                "width": 425,
+                "height": 200,
+                "minHeight": 200,
+                "minWidth": 425,
+                "closeOnEscape": false,
+                modal: true,
+                buttons: {
+                    "Add": function(e) {
+                        $('#newnfcform').submit();
+                    }
+                }
+            });
+            $("#newnfcform").on("submit", function(event) {
+                event.preventDefault();
+                console.log("SUBMIT");
+                var form = $(event.target).children('form');
+                var nfcid = form.children('input').val();
+                $('#newnfcform').dialog('close');
+                var tr = createTableRow(nfcid);
+                $('table').append(tr);
+
+            });
+        });
+
+        for (var i = 0; i < model.nfcList.length; i++) {
+            var entry = model.nfcList[i];
+            var nfc_id = entry.nfcId;
+            var jobId = entry.jobID;
+            var tr = createTableRow(nfc_id);
+            $('table').append(tr);
+            var select = $('#' + nfc_id);
+            select.val(jobId);
+        }
     }
 
-    function createSelect(chipId) {
-        var html = "<select id='" + chipId + "'><option value='newjob'>=== New job ===</option>";
+    function createSelectHTML(chipId) {
+        var html = "<select id='" + chipId + "'><option value=''></option><option value='newjob'>=== New job ===</option>";
         for (var i = 0; i < model.companyJobs.length; i++) {
             var job = model.companyJobs[i];
             html += "<option value='" + job.id + "'>" + job.jobTitle + "</option>";
         }
         html += "</select>";
         return html;
+    }
+
+    function createSaveButton(chipId) {
+        var saveButton = $(document.createElement('input'));
+        saveButton.attr('id', "savebutton_" + chipId);
+        saveButton.attr('type', 'button');
+        saveButton.attr('value', "Save");
+        saveButton.addClass('orangeButton');
+        saveButton.css('display', 'none');
+        saveButton.on("click", {
+            id: chipId
+        }, saveButtonClick);
+
+        return saveButton;
     }
 
     function selectChangeHandler(e) {
@@ -68,23 +114,32 @@ $(document).ready(function() {
                 id: sel.attr('id')
             }, createNewJob);
         } else {
-            var saveButton = $(document.createElement('input'));
-            saveButton.attr('type', 'button');
-            saveButton.attr('value', "Save");
-            saveButton.addClass('orangeButton');
-            saveButton.on("click", {
-                id: sel.attr('id')
-            }, saveButtonClick);
-
-            var sel = $(e.target);
-            saveButton.insertAfter(sel);
+            var nfcid = sel.attr('id');
+            var saveButton = $('#savebutton_' + nfcid);
+            saveButton.css('display', 'block');
         }
     }
 
     function saveButtonClick(e) {
         var sel = $("#" + e.data.id);
-        model.connectedJobs[e.data.id] = sel.val();
-        $(e.target).remove();
+        var option = sel.children('option:selected');
+        var jobTitle = option.text();
+        var jobId = option.val();
+        $.ajax({
+            type: "PUT",
+            url: "/api/nfc/" + e.data.id,
+            data: {
+                job_id: jobId,
+                job_title: jobTitle
+            },
+            success: function(data) {
+                model.nfcList.push(e.data.id);
+                model.connectedJobs[e.data.id] = jobId;
+                $(e.target).hide();
+            },
+            dataType: "json"
+        });
+
     }
 
     function createNewJob(event) {
@@ -111,8 +166,37 @@ $(document).ready(function() {
                     var nfc_id = $(this).attr('id');
                     $(this).val(model.connectedJobs[nfc_id]);
                 });
+                $.ajax({
+                    type: "PUT",
+                    url: "/api/nfc/" + event.data.id,
+                    data: {
+                        job_id: data.result.id,
+                        job_title: data.result.jobTitle
+                    },
+                    dataType: "json"
+                });
             },
             dataType: "json"
         });
+    }
+
+    function createTableRow(nfcId) {
+        var tr = $(document.createElement('tr'));
+        var nfctd = $(document.createElement('td'));
+        //nfcId[0].innerHTML = nfcId;
+        nfctd.append(nfcId);
+        tr.append(nfctd);
+        var seltd = $(document.createElement('td'));
+        seltd.attr('id', 'joblink_' + nfcId);
+        seltd[0].innerHTML = createSelectHTML(nfcId);
+        tr.append(seltd);
+        var btntd = $(document.createElement('td'));
+        btntd.css('width', '50px');
+        var saveButton = createSaveButton(nfcId);
+        btntd.append(saveButton);
+        tr.append(btntd);
+        var select = tr.find('select');
+        select.on('change', selectChangeHandler);
+        return tr;
     }
 });
