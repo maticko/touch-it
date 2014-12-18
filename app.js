@@ -12,7 +12,7 @@ app.get('/', function(req, res){
 	res.sendFile(__dirname + '/src/index.html');
 });
 
-app.get('/api/job/:nfc_id', function(req,res,next){
+app.get('/api/apply/:nfc_id', function(req,res,next){
 	// get jobTitle From local DB!
 	console.log(req.params.nfc_id);
 	res.send({
