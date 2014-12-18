@@ -53,6 +53,13 @@ app.post('/api/job/new', function(req, res){
 	request(options).pipe(res);
 });
 
+app.get('/api/job/list', function(req, res){
+	var url = 'http://waggle.zabdo.me/api/organizations/300/jobfolders?searchParameters=%7B%22offset%22%3A0%2C%22limit%22%3A24%2C%22searchtree%22%3A%7B%22filter%22%3A%7B%22starred%22%3Atrue%2C%22open%22%3Atrue%7D%2C%22query%22%3A%7B%22searchText%22%3A%22%22%7D%7D%7D';
+	var options = setOptions(url, 'GET', {}, true);
+
+	request(options).pipe(res);
+});
+
 var server = app.listen(8080, function(){
   var host = server.address().address;
   var port = server.address().port;
