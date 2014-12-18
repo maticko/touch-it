@@ -20,13 +20,13 @@ $(document).ready(function() {
             tablecontents += "</tr>";
 
             $.ajax("/api/apply/" + nfc_id, {
-                nfc_id: nfc_id,
+                nfcId: nfc_id,
                 success: function(data) {
-                    model.connectedJobs[this.nfc_id] = data;
-                    var tdlink = $('#joblink_' + this.nfc_id);
+                    model.connectedJobs[this.nfcId] = data;
+                    var tdlink = $('#joblink_' + this.nfcId);
                     var select = tdlink.children('select');
                     //tdlink[0].innerHTML = data.title;
-                    select.val(data.job_id);
+                    select.val(data.id);
                     select.on('change', selectChangeHandler);
                 }
             });
@@ -64,13 +64,17 @@ $(document).ready(function() {
                     }
                 }
             });
-            $("#newjobform").on("submit", createNewJob);
+            $("#newjobform").on("submit", {
+                id: sel.attr('id')
+            }, createNewJob);
         } else {
             var saveButton = $(document.createElement('input'));
             saveButton.attr('type', 'button');
             saveButton.attr('value', "Save");
             saveButton.addClass('orangeButton');
-            saveButton.click(saveButtonClick);
+            saveButton.on("click", {
+                id: sel.attr('id')
+            }, saveButtonClick);
 
             var sel = $(e.target);
             saveButton.insertAfter(sel);
@@ -78,6 +82,8 @@ $(document).ready(function() {
     }
 
     function saveButtonClick(e) {
+        var sel = $("#" + e.data.id);
+        model.connectedJobs[e.data.id] = sel.val();
         $(e.target).remove();
     }
 
@@ -86,14 +92,25 @@ $(document).ready(function() {
         console.log("SUBMIT");
         var form = $(event.target).children('form');
         var jobTitle = form.children('input').val();
+        console.log("Create job: " + jobTitle);
         $.ajax({
             type: "POST",
             url: "/api/job/new/",
             data: {
                 title: jobTitle
             },
-            success: function() {
+            success: function(data) {
                 $(event.target).dialog('close');
+                console.log(JSON.stringify(data.result));
+                model.companyJobs.push(data);
+                model.connectedJobs[event.data.id] = data.result.id;
+                $('select').each(function() {
+                    var html = $(this)[0].innerHTML;
+                    var opt = "<option value='" + data.result.id + "'>" + data.result.jobTitle + "</option>";
+                    $(this)[0].innerHTML = html + opt;
+                    var nfc_id = $(this).attr('id');
+                    $(this).val(model.connectedJobs[nfc_id]);
+                });
             },
             dataType: "json"
         });
