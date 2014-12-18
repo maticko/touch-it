@@ -44,16 +44,18 @@ $(document).ready(function() {
                     }
                 }
             });
-            $("#newnfcform").on("submit", function(event) {
+
+            function submitHandler(event) {
                 event.preventDefault();
                 console.log("SUBMIT");
                 var form = $(event.target).children('form');
                 var nfcid = form.children('input').val();
                 $('#newnfcform').dialog('close');
+                $('#newnfcform').remove();
                 var tr = createTableRow(nfcid);
                 $('table').append(tr);
-
-            });
+            }
+            $("#newnfcform").unbind("submit", submitHandler).bind('submit', submitHandler);
         });
 
         for (var i = 0; i < model.nfcList.length; i++) {
@@ -89,6 +91,19 @@ $(document).ready(function() {
         }, saveButtonClick);
 
         return saveButton;
+    }
+
+    function createDeleteButton(chipId) {
+        var delButton = $(document.createElement('input'));
+        delButton.attr('id', "savebutton_" + chipId);
+        delButton.attr('type', 'button');
+        delButton.attr('value', "[X]");
+        delButton.addClass('redButton');
+        delButton.on("click", {
+            id: chipId
+        }, delButtonClick);
+
+        return delButton;
     }
 
     function selectChangeHandler(e) {
@@ -139,7 +154,25 @@ $(document).ready(function() {
             },
             dataType: "json"
         });
+    }
 
+    function delButtonClick(e) {
+        $.ajax({
+            type: "PUT",
+            url: "/api/nfc/" + e.data.id,
+            data: {
+                job_id: "",
+                job_title: ""
+            },
+            success: function(data) {
+                var row = $("#row_" + e.data.id);
+                row.remove();
+            },
+            error: function(data) {
+                console.log(data);
+            },
+            dataType: "json"
+        });
     }
 
     function createNewJob(event) {
@@ -156,6 +189,7 @@ $(document).ready(function() {
             },
             success: function(data) {
                 $(event.target).dialog('close');
+                $('#newjobform').remove();
                 console.log(JSON.stringify(data.result));
                 model.companyJobs.push(data);
                 model.connectedJobs[event.data.id] = data.result.id;
@@ -182,6 +216,7 @@ $(document).ready(function() {
 
     function createTableRow(nfcId) {
         var tr = $(document.createElement('tr'));
+        tr.attr('id', 'row_' + nfcId);
         var nfctd = $(document.createElement('td'));
         //nfcId[0].innerHTML = nfcId;
         nfctd.append(nfcId);
@@ -195,7 +230,10 @@ $(document).ready(function() {
         var saveButton = createSaveButton(nfcId);
         btntd.append(saveButton);
         tr.append(btntd);
+        var delButton = createDeleteButton(nfcId);
+        tr.append(delButton);
         var select = tr.find('select');
+        select.val(-1);
         select.on('change', selectChangeHandler);
         return tr;
     }

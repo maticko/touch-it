@@ -68,6 +68,23 @@ body {
     margin: 0;
 }
 
+.redButton{
+    background-color: #800;
+    background-image: linear-gradient(rgb(206, 0, 0) 0px, rgb(180, 0, 0) 100%);
+    background-repeat: repeat-x;
+    border-color: rgb(161, 96, 0);
+    border-radius: 4px;
+    border-style: solid;
+    border-width: 1px;
+    color: #fff;
+    font-size: 14px;
+    height: 32px;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin: 0;
+    margin-top: 9px;
+}
+
 .bottomButton{
     margin-top: 10px;
 }
