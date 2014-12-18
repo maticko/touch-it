@@ -51,10 +51,10 @@ body {
     background-color:#f7f7f7;
 }
 
-input[type=button]{
+.orangeButton{
     background-color: rgb(230, 138, 0);
     background-image: linear-gradient(rgb(255, 153, 0) 0px, rgb(238, 136, 0) 100%);
-    ackground-repeat: repeat-x;
+    background-repeat: repeat-x;
     border-color: rgb(161, 96, 0);
     border-radius: 4px;
     border-style: solid;
@@ -64,7 +64,9 @@ input[type=button]{
     height: 34px;
     padding-left: 20px;
     padding-right: 20px;
+    margin-left: 20px;
 }
+
 input[type=text]{
     background-color: rgb(255, 255, 255);
     border-color: rgba(83, 168, 236, 0.8);
@@ -74,4 +76,27 @@ input[type=text]{
     width: 100%;
     font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
     font-size: 14px;
+}
+
+select{
+    height: 34px;
+    border-color: rgba(83, 168, 236, 0.8);
+    border-style: solid;
+    border-width: 1px;
+    font-family: "Helvetica Neue",Helvetica,Arial,sans-serif;
+    font-size: 14px;
+    width: 80%;
+}
+select>option{
+    height: 34px;
+    font-size: 14px;
+}
+.ui-dialog-titlebar{
+    background-color: #00a0cc;  
+    background-image: none;
+    color: #fff;
+}
+
+form{
+    border: none;
 }

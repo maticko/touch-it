@@ -4,7 +4,9 @@ var bodyParser = require('body-parser');
 var setOptions = require('./lib/setOptions');
 
 var app = express();
-
+app.use(bodyParser.urlencoded({
+    extended: true
+}));
 app.use(bodyParser.json());
 app.use('/src', express.static(__dirname + '/src'));
 
