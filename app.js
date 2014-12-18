@@ -2,56 +2,114 @@ var express = require('express');
 var request = require('request');
 var bodyParser = require('body-parser');
 var setOptions = require('./lib/setOptions');
+var Datastore = require('./lib/datastore');
+
+var Connection = require('./lib/connect');
 
 var app = express();
-app.use(bodyParser.urlencoded({
-    extended: true
-}));
-app.use(bodyParser.json());
-app.use('/src', express.static(__dirname + '/src'));
 
-app.get('/', function(req, res){
-	res.sendFile(__dirname + '/src/index.html');
-});
+Datastore(function(){
+	app.use(bodyParser.urlencoded({
+		extended: true
+	}));
+	app.use(bodyParser.json());
+	app.use('/src', express.static(__dirname + '/src'));
 
-app.get('/api/apply/:nfc_id', function(req,res,next){
-	// get jobTitle From local DB!
-	console.log(req.params.nfc_id);
-	res.send({
-		'title': 'test-job-title',
-		'description': 'this is job description',
-		'logo_url': 'src/logo/evil.png',
-		'job_id' : 1337
+	app.get('/', function(req, res){
+		res.sendFile(__dirname + '/src/index.html');
 	});
-});
 
-app.post('/api/apply/:nfc_id', function(req, res, next){
-	// do the magic with waggle then!
-	var email = req.body.profile_email;
-	var prof_id = req.body.profile_id;
-
-	// TODO: go to DB and get associated jobID;
-	var jobfolderID = "e5f01991-bfa0-4997-a115-8c4e1b1c8f1d";
-
-	var addToOrgUrl = 'http://waggle.zabdo.me/api/organizations/300/prospect';
-	var addToFolderUrl = "http://waggle.zabdo.me/api/organizations/300/profiles/byProfileId/"+prof_id;
-	var options = setOptions(addToOrgUrl, 'POST', {"personalDetail":{"email":email}}, true);
-	var folderIDbody = {"jobFolderIds":[jobfolderID]}
-	var opts2 = setOptions(addToFolderUrl, 'PUT', folderIDbody, true, 'application/findly.AddToJobFolderProfileCommand+json');
-
-	// Add prospect to org 
-	request(options, function(error, response, body){
-		// add prospect to jobfolder
-		request(opts2, function(err, rponse, body2){
-			res.send({
-				success: true
-			});
+	app.get('/api/apply/:nfc_id', function(req,res,next){
+		var nfc_id = req.params.nfc_id;
+		Connection.findOne({nfcId: nfc_id}, function(err, result){
+			if (err){
+				res.send(err);
+			} else {
+				res.send({
+					'title': result.jobTitle,
+					'logo_url': '/src/logo/evil.png',
+					'job_id' : result.jobID
+				});
+			}
 		});
 	});
-});
 
-app.post('/api/job/new', function(req, res){
-	var org_id = 300,
+	app.post('/api/apply/:nfc_id', function(req, res, next){
+		var email = req.body.profile_email;
+		var prof_id = req.body.profile_id;
+		var nfc_id = req.params.nfc_id;
+
+		Connection.findOne({nfcId:nfc_id}, function(err, conn){
+			if (err){
+				console.log('error!');
+				res.send(err);
+			} else {
+				var jobfolderID = conn.jobID;
+
+				var addToOrgUrl = 'http://waggle.zabdo.me/api/organizations/300/prospect';
+				var addToFolderUrl = "http://waggle.zabdo.me/api/organizations/300/profiles/byProfileId/"+prof_id;
+				var options = setOptions(addToOrgUrl, 'POST', {"personalDetail":{"email":email}}, true);
+				var folderIDbody = {"jobFolderIds":[jobfolderID]};
+				var opts2 = setOptions(addToFolderUrl, 'PUT', folderIDbody, true, 'application/findly.AddToJobFolderProfileCommand+json');
+
+				// Add prospect to org 
+				request(options, function(error, response, body){
+					// add prospect to jobfolder
+					request(opts2, function(err, rponse, body2){
+						res.send({
+							success: true
+						});
+					});
+				});	
+			}
+		});
+	});
+
+	app.get('/api/nfc/list', function(req, res, next){
+		var conn = Connection;
+		conn.find(function(err, results){
+			res.send(results); 
+		});
+	});
+
+	app.put('/api/nfc/:nfc_id', function(req, res, next){
+		var nfc_id = req.params.nfc_id,
+		job_id = req.body.job_id,
+		job_title = req.body.job_title;
+
+		Connection.findOne({nfcId: nfc_id}, function(err, result){
+			if (err){
+				var newConnection = new Connection({nfcId: nfc_id, jobID: job_id, jobTitle: job_title});
+				newConnection.save(function(err,newconn){
+					if (err){
+						res.send({success: false});
+					} else {
+						res.send({success: true});
+					}
+				});
+			} else {
+				result.jobID = job_id;
+				result.jobTitle = job_title;
+				result.save(function(err,updatedConn){
+					if (err){
+						res.send({success: false});
+					} else {
+						res.send({success: true});
+					}
+				});
+			}
+		})
+	});
+
+	app.get('/api/job/list', function(req, res){
+		var url = 'http://waggle.zabdo.me/api/organizations/300/jobfolders?searchParameters=%7B%22offset%22%3A0%2C%22limit%22%3A24%2C%22searchtree%22%3A%7B%22filter%22%3A%7B%22starred%22%3Atrue%2C%22open%22%3Atrue%7D%2C%22query%22%3A%7B%22searchText%22%3A%22%22%7D%7D%7D';
+		var options = setOptions(url, 'GET', {}, true);
+
+		request(options).pipe(res);
+	});
+
+	app.post('/api/job/new', function(req, res){
+		var org_id = 300,
 		body = {
 			"organizationId":org_id,
 			"id":null,
@@ -69,24 +127,13 @@ app.post('/api/job/new', function(req, res){
 			"protocol":"http:"
 		},
 		options = setOptions('http://waggle.zabdo.me/api/organizations/300/jobfolders/', 'POST', body, true);
-	request(options).pipe(res);
+		request(options).pipe(res);
+	});
+
+	var server = app.listen(8080, function(){
+		var host = server.address().address;
+		var port = server.address().port;
+
+		console.log('Example app listening at http://%s:%s', host, port);
+	});
 });
-
-app.get('/api/job/list', function(req, res){
-	var url = 'http://waggle.zabdo.me/api/organizations/300/jobfolders?searchParameters=%7B%22offset%22%3A0%2C%22limit%22%3A24%2C%22searchtree%22%3A%7B%22filter%22%3A%7B%22starred%22%3Atrue%2C%22open%22%3Atrue%7D%2C%22query%22%3A%7B%22searchText%22%3A%22%22%7D%7D%7D';
-	var options = setOptions(url, 'GET', {}, true);
-
-	request(options).pipe(res);
-});
-
-var server = app.listen(8080, function(){
-  var host = server.address().address;
-  var port = server.address().port;
-
-  console.log('Example app listening at http://%s:%s', host, port);
-});
-
-// findly cookie
-// .FINDLY=9319AF6074A1B48E63E4F8CEA6447FA41B54AE5EFAB1A4C1154CADDB132F9DB6EF5A9AF3F870C526C7FCD5E25BFC5C88ADD4D657F2D5126F491D52504569F7B06ECA662E11BA1066B15A5BABCCD4E64F686531F3C4F5FCC975916ADB859034E590D2B2043B6FE11E3CCF7B8EFFBF7274AB15C61438009AF22FBB494A2F370DCDD2E068E7555215CE230C833A0055EB8DDB9CEF9DF1C00734F7A3CBF541C9A92B2040C3D52E98900833984968B4EC76610BB58A14E2BD1F109D1E1FA958F8DDD80A0C590EC4987D3BDE271F1A4D61202B3A4E4F743D61BEF44ED42720E4C9A04A6CCB10E3DD41D1C1D0247AE5BA329A9DFCA9605F8F486804C59E23F38C0A7BB8C2D485FAEF83152AFF3BCA00CC104AF36ECC1F2AB81189EF4D2D5D6DF3FADD134FEA57BDC3395FB2C77BBA8323E4D393EA30B822901EE7990D3EB40FB1089E773B31CC1204DD99E4F9919FF3EA314A775CFDED534ED9A7EDC1D3C9F6C53BF64CC73FB4F0;
-
-
