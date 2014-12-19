@@ -51,11 +51,13 @@ Datastore(function(){
 				var options = setOptions(addToOrgUrl, 'POST', {"personalDetail":{"email":email}}, true);
 				var folderIDbody = {"jobFolderIds":[jobfolderID]};
 				var opts2 = setOptions(addToFolderUrl, 'PUT', folderIDbody, true, 'application/findly.AddToJobFolderProfileCommand+json');
-
+				console.log(jobfolderID);
+				console.log(prof_id);
 				// Add prospect to org 
 				request(options, function(error, response, body){
 					// add prospect to jobfolder
 					request(opts2, function(err, rponse, body2){
+						console.log(body2);
 						res.send({
 							success: true
 						});

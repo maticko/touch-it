@@ -97,7 +97,7 @@ $(document).ready(function() {
         var delButton = $(document.createElement('input'));
         delButton.attr('id', "savebutton_" + chipId);
         delButton.attr('type', 'button');
-        delButton.attr('value', "[X]");
+        delButton.attr('value', " X ");
         delButton.addClass('redButton');
         delButton.on("click", {
             id: chipId
